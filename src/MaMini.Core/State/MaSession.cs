@@ -98,6 +98,21 @@ public sealed class MaSession : IAsyncDisposable
         return RunPlayerCommandAsync("players/cmd/play_pause", np.PlayerId, clearOptimistic: true);
     }
 
+    public Task PauseAsync() => SetPlayingAsync(false, "players/cmd/pause");
+
+    public Task PlayAsync() => SetPlayingAsync(true, "players/cmd/play");
+
+    private Task SetPlayingAsync(bool playing, string command)
+    {
+        if (Store.Current.PlayerId is not { } id)
+        {
+            return Task.CompletedTask;
+        }
+
+        Store.SetOptimisticPlaying(playing);
+        return RunPlayerCommandAsync(command, id, clearOptimistic: true);
+    }
+
     public Task NextAsync() => Store.Current.PlayerId is { } id ? RunPlayerCommandAsync("players/cmd/next", id) : Task.CompletedTask;
 
     public Task PreviousAsync() => Store.Current.PlayerId is { } id ? RunPlayerCommandAsync("players/cmd/previous", id) : Task.CompletedTask;

@@ -90,6 +90,9 @@ public partial class WidgetWindow : Window
     private void UpdateExpanded()
     {
         var visibility = _compact ? Visibility.Collapsed : Visibility.Visible;
+        VolumeBar.Visibility = visibility;
+        ToastText.FontSize = _compact ? 10 : 12;
+        ToastText.Margin = _compact ? new Thickness(4, 0, 4, 0) : new Thickness(12, 0, 12, 0);
         _artToolTip.Content = _compact ? "Expand" : "Shrink to album art";
         System.Windows.Automation.AutomationProperties.SetName(ArtButton, _compact ? "Expand widget" : "Shrink widget to album art");
         if (DetailsPanel.Visibility == visibility)
