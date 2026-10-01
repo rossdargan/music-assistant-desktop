@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag (for example v1.2.3)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set package version
+        shell: pwsh
+        env:
+          RELEASE_INPUT: ${{ inputs.version }}
+        run: |
+          if ($env:GITHUB_EVENT_NAME -eq "workflow_dispatch") {
+            $releaseTag = $env:RELEASE_INPUT
+          } elseif ($env:GITHUB_REF_TYPE -eq "tag") {
+            $releaseTag = $env:GITHUB_REF_NAME
+          } else {
+            $releaseTag = "main-$env:GITHUB_RUN_NUMBER"
+          }
+
+          if ($env:GITHUB_EVENT_NAME -ne "push" -or $env:GITHUB_REF_TYPE -eq "tag") {
+            if ($releaseTag -notmatch '^v\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
+              throw "Release tags must use semantic versioning, for example v1.2.3 or v1.2.3-rc.1."
+            }
+            $version = $releaseTag.TrimStart('v')
+          } else {
+            $version = "0.1.0-main.$env:GITHUB_RUN_NUMBER"
+          }
+
+          "RELEASE_TAG=$releaseTag" >> $env:GITHUB_ENV
+          "RELEASE_VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Restore
+        run: dotnet restore MusicAssistantMini.sln
+
+      - name: Build
+        run: dotnet build MusicAssistantMini.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test MusicAssistantMini.sln -c Release --no-build --logger "trx;LogFileName=results.trx"
+
+      - name: Publish self-contained Windows x64 app
+        run: dotnet publish src/MaMini.App/MaMini.App.csproj -c Release -r win-x64 --self-contained true -p:Version=${{ env.RELEASE_VERSION }} -o publish
+
+      - name: Package app
+        shell: pwsh
+        run: Compress-Archive -Path publish\* -DestinationPath "MaMini-${{ env.RELEASE_TAG }}-win-x64.zip"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MaMini-${{ env.RELEASE_TAG }}-win-x64
+          path: MaMini-${{ env.RELEASE_TAG }}-win-x64.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Create GitHub release
+        if: github.event_name == 'workflow_dispatch' || github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          files: MaMini-${{ env.RELEASE_TAG }}-win-x64.zip

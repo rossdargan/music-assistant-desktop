@@ -62,3 +62,9 @@ dotnet run --project src/MaMini.App
 ```
 
 The .NET 8 or newer SDK is required. `src/MaMini.Core` holds the Music Assistant client, state and settings (UI-free, unit-tested against a fake server). `src/MaMini.App` is the WPF widget.
+
+## Releases
+
+Every push to `main` builds and tests the solution, then uploads a self-contained Windows x64 ZIP as a 30-day workflow artifact. To create a versioned GitHub release, open **Actions → Release → Run workflow**, enter a semantic-version tag such as `v1.2.3`, and run it on `main`. The workflow builds that commit and publishes the ZIP (`MaMini-v1.2.3-win-x64.zip`) with generated release notes. Tags containing a hyphen, such as `v1.2.3-rc.1`, are marked as prereleases. Pushing a semantic-version tag directly also creates a release.
+
+The ZIP includes the .NET runtime, so the .NET Desktop Runtime does not need to be installed separately.
