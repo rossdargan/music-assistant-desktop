@@ -30,6 +30,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         defaultCorner = settings.DefaultCorner;
         startWithWindows = settings.StartWithWindows;
         notifyOnTrackChange = settings.NotifyOnTrackChange;
+        autoPauseOnTeamsCall = settings.AutoPauseOnTeamsCall;
+        autoResumeAfterTeamsCall = settings.AutoResumeAfterTeamsCall;
         mediaKeys = settings.MediaKeys;
         captureVolumeKeys = settings.CaptureVolumeKeys;
         volumeStep = settings.VolumeStep;
@@ -125,6 +127,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     private bool notifyOnTrackChange;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsTeamsPauseEnabled))]
+    private bool autoPauseOnTeamsCall;
+
+    [ObservableProperty]
+    private bool autoResumeAfterTeamsCall;
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsHookMode))]
     private MediaKeyMode mediaKeys;
 
@@ -157,6 +166,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     public bool IsHookMode => MediaKeys == MediaKeyMode.Hook;
 
+    public bool IsTeamsPauseEnabled => AutoPauseOnTeamsCall;
+
     public bool CanSave => string.IsNullOrWhiteSpace(ServerUrl) || ServerAddress.TryNormalize(ServerUrl, out _);
 
     /// <summary>Produces the updated settings; the token is handled separately (it's encrypted by the caller).</summary>
@@ -177,6 +188,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         s.DefaultCorner = DefaultCorner;
         s.StartWithWindows = StartWithWindows;
         s.NotifyOnTrackChange = NotifyOnTrackChange;
+        s.AutoPauseOnTeamsCall = AutoPauseOnTeamsCall;
+        s.AutoResumeAfterTeamsCall = AutoResumeAfterTeamsCall;
         s.MediaKeys = MediaKeys;
         s.CaptureVolumeKeys = CaptureVolumeKeys;
         s.VolumeStep = VolumeStep;

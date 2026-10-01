@@ -15,6 +15,7 @@ A tiny always-on-top Windows widget for [Music Assistant](https://music-assistan
 - Drag to move. The widget snaps to screen edges and remembers its position per monitor. It is kept on-screen when displays change.
 - Keyboard media keys (see below), plus configurable global shortcuts (default **Ctrl+Alt+M** toggles the widget)
 - Auto-hide when a fullscreen app or game is on the same monitor
+- Automatically pause Music Assistant when active audio from the Microsoft Teams desktop app is detected. In Settings, optionally resume the same speaker after the audio session ends (off by default); music already paused before the call, or resumed manually during it, is not touched. Detection uses Windows audio sessions, so audio-session activity is only an approximation of call status.
 - Light, dark and high-contrast themes (follows Windows by default), adjustable opacity
 - Auto-reconnect with back-off, including after sleep and network changes
 - Start with Windows (optional) and track-change notifications (optional)

@@ -89,6 +89,10 @@ public sealed class AppSettings
 
     public bool NotifyOnTrackChange { get; set; }
 
+    public bool AutoPauseOnTeamsCall { get; set; } = true;
+
+    public bool AutoResumeAfterTeamsCall { get; set; }
+
     public MediaKeyMode MediaKeys { get; set; } = MediaKeyMode.Smtc;
 
     /// <summary>Hook mode only: also take over the volume up/down/mute keys.</summary>

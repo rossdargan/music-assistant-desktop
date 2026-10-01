@@ -146,6 +146,13 @@
                         <CheckBox Margin="90,3,0,3" Content="Also control speaker volume with the volume keys"
                                   IsChecked="{Binding CaptureVolumeKeys}"
                                   Visibility="{Binding IsHookMode, Converter={StaticResource BoolToVis}}" />
+                        <CheckBox Content="Pause Music Assistant while a Microsoft Teams call is active"
+                                  IsChecked="{Binding AutoPauseOnTeamsCall}"
+                                  ToolTip="Detects active audio sessions from the Teams desktop app." />
+                        <CheckBox Margin="18,3,0,3" Content="Resume playback when the Teams call ends"
+                                  IsChecked="{Binding AutoResumeAfterTeamsCall}"
+                                  IsEnabled="{Binding IsTeamsPauseEnabled}"
+                                  ToolTip="Only resumes the speaker MA Mini paused for the call, and only if you didn't change speaker or press play yourself." />
                         <Grid Style="{StaticResource Row}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="90" />

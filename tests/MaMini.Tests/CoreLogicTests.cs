@@ -120,6 +120,8 @@ public sealed class SettingsServiceTests : IDisposable
         {
             s.ServerUrl = "http://ma:8095";
             s.MediaKeys = MediaKeyMode.Hook;
+            s.AutoPauseOnTeamsCall = false;
+            s.AutoResumeAfterTeamsCall = true;
             s.Placement = new WindowPlacement { X = -100, Y = 20, Monitor = @"\\.\DISPLAY2" };
             service.SetToken(s, "my-token");
         });
@@ -132,6 +134,8 @@ public sealed class SettingsServiceTests : IDisposable
         var settings = reloaded.Load();
         Assert.Equal("http://ma:8095", settings.ServerUrl);
         Assert.Equal(MediaKeyMode.Hook, settings.MediaKeys);
+        Assert.False(settings.AutoPauseOnTeamsCall);
+        Assert.True(settings.AutoResumeAfterTeamsCall);
         Assert.Equal(-100, settings.Placement!.X);
         Assert.Equal("my-token", reloaded.GetToken());
     }
@@ -147,6 +151,19 @@ public sealed class SettingsServiceTests : IDisposable
 
         Assert.Null(settings.ServerUrl);
         Assert.True(File.Exists(path + ".bad"));
+    }
+
+    [Fact]
+    public void Legacy_settings_enable_teams_call_pausing_by_default()
+    {
+        Directory.CreateDirectory(_dir);
+        var path = Path.Combine(_dir, "settings.json");
+        File.WriteAllText(path, """{ "serverUrl": "http://x" }""");
+
+        var settings = new SettingsService(path, new ReverseProtector()).Load();
+
+        Assert.True(settings.AutoPauseOnTeamsCall);
+        Assert.False(settings.AutoResumeAfterTeamsCall);
     }
 
     [Fact]

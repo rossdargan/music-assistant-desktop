@@ -23,6 +23,7 @@ internal sealed class AppController : IDisposable
     private readonly Dispatcher _dispatcher;
     private readonly SettingsService _settings;
     private readonly NowPlayingStore _store = new();
+    private readonly TeamsCallPlayback _teamsPlayback = new();
     private readonly MaSession _session;
     private readonly ImageLoader _images;
     private readonly ThemeService _theme;
@@ -35,6 +36,7 @@ internal sealed class AppController : IDisposable
     private MediaKeyManager? _mediaKeys;
     private TrayService? _tray;
     private SystemEventsWatcher? _systemEvents;
+    private TeamsCallDetector? _teamsCallDetector;
     private FullscreenDetector? _fullscreen;
     private SettingsWindow? _settingsWindow;
 
@@ -107,6 +109,9 @@ internal sealed class AppController : IDisposable
         _systemEvents = new SystemEventsWatcher(_dispatcher);
         _systemEvents.Resumed += (_, _) => _session.ReconnectNow(force: true);
         _systemEvents.NetworkChanged += (_, _) => _session.Refresh();
+
+        _teamsCallDetector = new TeamsCallDetector(_dispatcher);
+        _teamsCallDetector.CallActiveChanged += (_, active) => OnTeamsCallChanged(active);
 
         _store.NowPlayingChanged += (_, np) => OnNowPlayingChanged(np);
         _store.SelectedPlayerChanged += (_, id) =>
@@ -193,6 +198,7 @@ internal sealed class AppController : IDisposable
         _settingsWindow?.Close();
         _fullscreen?.Dispose();
         _mediaKeys?.Dispose();
+        _teamsCallDetector?.Dispose();
         _hotkeys?.Dispose();
         _systemEvents?.Dispose();
         _tray?.Dispose();
@@ -268,6 +274,16 @@ internal sealed class AppController : IDisposable
         if (_fullscreen is not null)
         {
             _fullscreen.Enabled = s.HideWhenFullscreen;
+        }
+
+        if (_teamsCallDetector is not null)
+        {
+            if (!s.AutoPauseOnTeamsCall)
+            {
+                _teamsPlayback.Clear("Teams call pausing was turned off");
+            }
+
+            _teamsCallDetector.Enabled = s.AutoPauseOnTeamsCall;
         }
 
         if (_mediaKeys is not null && _appliedMediaKeys != (s.MediaKeys, s.CaptureVolumeKeys))
@@ -350,8 +366,42 @@ internal sealed class AppController : IDisposable
 
     private void OnNowPlayingChanged(NowPlaying np)
     {
+        var pending = _teamsPlayback.HasPendingResume;
+        _teamsPlayback.OnNowPlayingChanged(np, DateTimeOffset.UtcNow);
+        if (pending && !_teamsPlayback.HasPendingResume)
+        {
+            Log.Info($"Won't resume after the Teams call: {_teamsPlayback.LastClearReason}.");
+        }
+
         _mediaKeys?.UpdateDisplay(np, null);
         UpdateTrayToolTip();
+    }
+
+    private void OnTeamsCallChanged(bool active)
+    {
+        var np = _store.Current;
+        var action = _teamsPlayback.OnCallChanged(active, np, Settings.AutoResumeAfterTeamsCall, DateTimeOffset.UtcNow);
+        switch (action)
+        {
+            case TeamsPlaybackAction.Pause:
+                Log.Info("Active Microsoft Teams audio detected; pausing Music Assistant.");
+                _ = _session.PauseAsync();
+                break;
+            case TeamsPlaybackAction.Resume when _session.State == ConnectionState.Connected:
+                Log.Info($"Microsoft Teams audio ended; resuming Music Assistant (speaker state was {np.State}).");
+                _ = _session.PlayAsync();
+                break;
+            case TeamsPlaybackAction.Resume:
+                Log.Info("Microsoft Teams audio ended, but Music Assistant is not connected; not resuming.");
+                break;
+            default:
+                if (!active)
+                {
+                    Log.Info($"Microsoft Teams audio ended; nothing to resume ({_teamsPlayback.LastClearReason ?? "music wasn't paused by MA Mini"}).");
+                }
+
+                break;
+        }
     }
 
     private void OnTrackChanged(NowPlaying np)

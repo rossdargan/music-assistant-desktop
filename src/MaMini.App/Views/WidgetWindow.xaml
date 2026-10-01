@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:MaMini.App.ViewModels"
+        xmlns:controls="clr-namespace:MaMini.App.Controls"
         x:Name="Self"
         Title="MA Mini"
         WindowStyle="None"
@@ -157,10 +158,10 @@
                 </Rectangle>
             </Grid>
 
-            <!-- Volume overlay shown while scrolling. -->
-            <Border Grid.RowSpan="2" CornerRadius="10" Background="{DynamicResource Brush.Overlay}"
-                    Visibility="{Binding VolumeOverlayVisible, Converter={StaticResource BoolToVis}}"
-                    IsHitTestVisible="False">
+            <!-- Volume overlay shown while scrolling. Overlays must not resize the window. -->
+            <controls:OverlayDecorator Grid.RowSpan="2" IsHitTestVisible="False">
+            <Border CornerRadius="10" Background="{DynamicResource Brush.Overlay}" ClipToBounds="True"
+                    Visibility="{Binding VolumeOverlayVisible, Converter={StaticResource BoolToVis}}">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <TextBlock VerticalAlignment="Center" FontSize="16" Foreground="{DynamicResource Brush.Foreground}">
                         <TextBlock.Style>
@@ -174,23 +175,25 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                    <Grid Width="110" Height="4" Margin="10,0" VerticalAlignment="Center">
+                    <Grid x:Name="VolumeBar" Width="110" Height="4" Margin="10,0" VerticalAlignment="Center">
                         <Rectangle Fill="{DynamicResource Brush.ProgressTrack}" RadiusX="2" RadiusY="2" />
                         <Rectangle Fill="{DynamicResource Brush.Accent}" RadiusX="2" RadiusY="2" HorizontalAlignment="Left"
                                    Width="{Binding Volume, Converter={StaticResource PercentToWidth}, ConverterParameter=110}" />
                     </Grid>
-                    <TextBlock Text="{Binding Volume}" Width="28" FontSize="13" VerticalAlignment="Center"
+                    <TextBlock Text="{Binding Volume}" MinWidth="22" Margin="4,0,0,0" FontSize="13" VerticalAlignment="Center"
                                Foreground="{DynamicResource Brush.Foreground}" />
                 </StackPanel>
             </Border>
+            </controls:OverlayDecorator>
 
             <!-- Transient error message (e.g. favourite failed). -->
-            <Border Grid.RowSpan="2" CornerRadius="10" Background="{DynamicResource Brush.Overlay}"
-                    Visibility="{Binding Toast, Converter={StaticResource NullToCollapsed}}"
-                    IsHitTestVisible="False">
-                <TextBlock Text="{Binding Toast}" Foreground="{DynamicResource Brush.Foreground}" FontSize="12"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Margin="12,0" />
+            <controls:OverlayDecorator Grid.RowSpan="2" IsHitTestVisible="False">
+            <Border CornerRadius="10" Background="{DynamicResource Brush.Overlay}" ClipToBounds="True"
+                    Visibility="{Binding Toast, Converter={StaticResource NullToCollapsed}}">
+                <TextBlock x:Name="ToastText" Text="{Binding Toast}" Foreground="{DynamicResource Brush.Foreground}" FontSize="12"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" Margin="12,0" />
             </Border>
+            </controls:OverlayDecorator>
         </Grid>
     </Border>
 </Window>

@@ -35,6 +35,8 @@ public sealed class MaSessionTests
             favorite = false,
         });
         server.Handle("players/cmd/play_pause", _ => null);
+        server.Handle("players/cmd/play", _ => null);
+        server.Handle("players/cmd/pause", _ => null);
         server.Handle("players/cmd/next", _ => null);
         server.Handle("players/cmd/volume_set", _ => null);
         server.Handle("music/favorites/add_item", _ => null);
@@ -86,6 +88,23 @@ public sealed class MaSessionTests
 
             var args = Assert.Single(server.ArgsFor("players/cmd/play_pause"));
             Assert.Equal("kitchen", args.GetProperty("player_id").GetString());
+        }
+    }
+
+    [Fact]
+    public async Task Explicit_pause_and_play_send_their_commands()
+    {
+        var (server, session) = await StartAsync();
+        await using (server)
+        await using (session)
+        {
+            await session.PauseAsync();
+            Assert.False(session.Store.Current.IsPlaying);
+            await session.PlayAsync();
+            Assert.True(session.Store.Current.IsPlaying);
+
+            Assert.Equal("kitchen", Assert.Single(server.ArgsFor("players/cmd/pause")).GetProperty("player_id").GetString());
+            Assert.Equal("kitchen", Assert.Single(server.ArgsFor("players/cmd/play")).GetProperty("player_id").GetString());
         }
     }
 
