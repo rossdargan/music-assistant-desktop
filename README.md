@@ -11,7 +11,7 @@ A tiny always-on-top Windows widget for [Music Assistant](https://music-assistan
 - Speaker picker: click the speaker name under the artist. Groups show their member count. There's an optional **Follow active speaker** mode.
 - Click the album art to shrink the widget down to just the art; click it again to expand. The ↗ button (or the tray menu) opens the full Music Assistant web UI.
 - Mouse wheel over the widget changes the speaker volume
-- System tray icon with the same menu as right-clicking the widget: playback, speaker, show/hide, always on top, lock position, click-through, album art only, move to corner, reconnect, settings, copy diagnostics and exit
+- System tray icon with the same menu as right-clicking the widget: playback, speaker, show/hide, always on top, lock position, click-through, album art only, move to corner, reconnect, settings, copy diagnostics, check for updates and exit
 - Drag to move. The widget snaps to screen edges and remembers its position per monitor. It is kept on-screen when displays change.
 - Keyboard media keys (see below), plus configurable global shortcuts (default **Ctrl+Alt+M** toggles the widget)
 - Auto-hide when a fullscreen app or game is on the same monitor
@@ -24,10 +24,14 @@ A tiny always-on-top Windows widget for [Music Assistant](https://music-assistan
 ## Requirements
 
 - Windows 10 (2004 / build 19041) or later
-- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0) for framework-dependent builds only (release installers and ZIPs include it)
 - A Music Assistant server, version 2.x (tested with 2.10)
 
 ## Setup
+
+Download and run `MaMini-win-Setup.exe` from [GitHub Releases](https://github.com/rossdargan/music-assistant-desktop/releases) for a per-user Windows x64 installation, desktop/Start menu shortcuts and in-app updates. The installer is currently unsigned, so Windows may show a SmartScreen warning.
+
+If switching from an older portable or development build, exit that copy from its tray menu before installing. Settings and the encrypted token remain in `%APPDATA%\MaMini`. If **Start with Windows** is enabled, launching the installed copy refreshes the startup entry to its current path.
 
 1. Run `MaMini.exe`. Settings opens on first run.
 2. **Server URL**: click **Find** to discover servers on your network, or type one:
@@ -67,4 +71,10 @@ The .NET 8 or newer SDK is required. `src/MaMini.Core` holds the Music Assistant
 
 Every push to `main` builds and tests the solution, then uploads a self-contained Windows x64 ZIP as a 30-day workflow artifact. To create a versioned GitHub release, open **Actions → Release → Run workflow**, enter a semantic-version tag such as `v1.2.3`, and run it on `main`. The workflow builds that commit and publishes the ZIP (`MaMini-v1.2.3-win-x64.zip`) with generated release notes. Tags containing a hyphen, such as `v1.2.3-rc.1`, are marked as prereleases. Pushing a semantic-version tag directly also creates a release.
 
-The ZIP includes the .NET runtime, so the .NET Desktop Runtime does not need to be installed separately.
+The workflow also packages a Velopack installer and update feed for every build. Versioned releases attach the installer, full update package and feed alongside the portable ZIP; keep those assets together so installed copies can update. Both the installer and ZIP include the .NET runtime, so the .NET Desktop Runtime does not need to be installed separately.
+
+### Updating
+
+Right-click the widget or tray icon and select **Check for updates...**. Installed copies check stable GitHub releases (not prereleases or `main` artifacts), show the installed and available versions, and ask before downloading, installing and restarting. No updates are downloaded automatically. The first release with the installer must be installed manually; older ZIP/development copies do not have the updater.
+
+Portable ZIP users can still update manually: exit MA Mini, replace the extracted files in the same permanent folder, and launch it again. Settings are preserved for both installation types.

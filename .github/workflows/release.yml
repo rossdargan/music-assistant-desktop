@@ -70,11 +70,19 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path publish\* -DestinationPath "MaMini-${{ env.RELEASE_TAG }}-win-x64.zip"
 
+      - name: Install Velopack packaging tool
+        run: dotnet tool install vpk --tool-path .\tools\velopack --version 1.2.161
+
+      - name: Build installer and update feed
+        run: .\tools\velopack\vpk.exe pack --runtime win-x64 --packId MaMini --packVersion ${{ env.RELEASE_VERSION }} --packDir publish --mainExe MaMini.exe --packTitle "MA Mini" --icon src\MaMini.App\Assets\app.ico --shortcuts Desktop,StartMenuRoot --outputDir installer
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: MaMini-${{ env.RELEASE_TAG }}-win-x64
-          path: MaMini-${{ env.RELEASE_TAG }}-win-x64.zip
+          path: |
+            MaMini-${{ env.RELEASE_TAG }}-win-x64.zip
+            installer/*
           if-no-files-found: error
           retention-days: 30
 
@@ -86,4 +94,7 @@ jobs:
           prerelease: ${{ contains(env.RELEASE_TAG, '-') }}
           tag_name: ${{ env.RELEASE_TAG }}
           target_commitish: ${{ github.sha }}
-          files: MaMini-${{ env.RELEASE_TAG }}-win-x64.zip
+          fail_on_unmatched_files: true
+          files: |
+            MaMini-${{ env.RELEASE_TAG }}-win-x64.zip
+            installer/*
