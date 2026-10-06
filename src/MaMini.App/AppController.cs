@@ -27,6 +27,7 @@ internal sealed class AppController : IDisposable
     private readonly MaSession _session;
     private readonly ImageLoader _images;
     private readonly ThemeService _theme;
+    private readonly AppUpdateService _updates = new();
 
     private WidgetViewModel? _vm;
     private WidgetWindow? _widget;
@@ -266,10 +267,7 @@ internal sealed class AppController : IDisposable
             _store.Select(s.SelectedPlayerId);
         }
 
-        if (AutostartService.IsEnabled != s.StartWithWindows)
-        {
-            AutostartService.Apply(s.StartWithWindows);
-        }
+        AutostartService.Apply(s.StartWithWindows);
 
         if (_fullscreen is not null)
         {
@@ -537,6 +535,8 @@ internal sealed class AppController : IDisposable
         menu.Items.Add(Item("Reconnect", () => _session.ReconnectNow(force: true), _session.Client.HttpBase is not null));
         menu.Items.Add(Item("Settings…", OpenSettings));
         menu.Items.Add(Item("Copy diagnostics", CopyDiagnostics));
+        menu.Items.Add(Item(_updates.IsBusy ? "Checking/downloading update..." : "Check for updates...",
+            () => _ = _updates.CheckForUpdatesAsync(), !_updates.IsBusy));
         menu.Items.Add(new Separator());
         menu.Items.Add(Item("Exit", () => _app.Shutdown()));
     }
